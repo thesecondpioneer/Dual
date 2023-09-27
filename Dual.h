@@ -13,61 +13,9 @@ namespace dual {
         Dual();
 
         Dual(F x_, F y_);
+
+        Dual(const Dual<F> &a);
     };
-
-    template<typename F>
-    Dual<F> operator+(const Dual<F> &a, const Dual<F> &b);
-
-    template<typename F>
-    Dual<F> operator-(const Dual<F> &a, const Dual<F> &b);
-
-    template<typename F>
-    Dual<F> operator*(const Dual<F> &a, const Dual<F> &b);
-
-    template<typename F>
-    Dual<F> operator/(const Dual<F> &a, const Dual<F> &b);
-
-    template<typename F>
-    Dual<F> operator^(const Dual<F> &a, const Dual<F> &b);
-
-    template<typename F>
-    Dual<F> log(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> sin(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> cos(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> exp(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> asin(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> acos(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> sinh(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> cosh(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> atan(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> tan(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> asinh(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> acosh(const Dual<F> &a);
-
-    template<typename F>
-    Dual<F> atanh(const Dual<F> &a);
 
     template<typename F>
     Dual<F>::Dual() = default;
@@ -79,42 +27,60 @@ namespace dual {
     }
 
     template<typename F>
+    Dual<F>::Dual(const Dual<F> &a) {
+        x = a.x;
+        y = a.y;
+    }
+
+    template<typename F>
+    Dual<F> operator+=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+        a.x += b.x;
+        a.y += b.y;
+    }
+
+    template<typename F>
+    Dual<F> operator-=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+        a.x -= b.x;
+        a.y -= b.y;
+    }
+
+    template<typename F>
+    Dual<F> operator*=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+        a.x *= b.x;
+        a.y = a.x * b.y + b.x * a.y;
+    }
+
+    template<typename F>
+    Dual<F> operator/=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+        a.x /= b.x;
+        a.y = (b.x * a.y - a.x * b.y) / (b.x * b.x);
+    }
+
+    template<typename F>
     Dual<F> operator+(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        dual::Dual<F> result;
-        result.x = a.x + b.x;
-        result.y = a.y + b.y;
-        return result;
+        return Dual<F>(a) += b;
     }
 
     template<typename F>
     Dual<F> operator-(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        dual::Dual<F> result;
-        result.x = a.x - b.x;
-        result.y = a.y - b.y;
-        return result;
+        return Dual<F>(a) -= b;
     }
 
     template<typename F>
     Dual<F> operator*(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        dual::Dual<F> result;
-        result.x = a.x * b.x;
-        result.y = a.x * b.y + b.x * a.y;
-        return result;
+        return Dual<F>(a) *= b;
     }
 
     template<typename F>
     Dual<F> operator/(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        dual::Dual<F> result;
-        result.x = a.x / b.x;
-        result.y = (b.x * a.y - a.x * b.y) / (b.x * b.x);
-        return result;
+        return Dual<F>(a) /= b;
     }
 
     template<typename F>
     Dual<F> operator^(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         dual::Dual<F> result;
         result.x = std::pow(a.x, b.x);
-        result.y = result.x * b.y * std::log(a.x) + a.y * b.x * std::pow(a.x, b.x -1);
+        result.y = result.x * b.y * std::log(a.x) + a.y * b.x * std::pow(a.x, b.x - 1);
         return result;
     }
 
@@ -123,6 +89,66 @@ namespace dual {
         dual::Dual<F> result;
         result.x = std::log(a.x);
         result.y = a.y / a.x;
+        return result;
+    }
+
+    template<typename F>
+    Dual<F> log10(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        result.x = std::log10(a.x);
+        result.y = a.y / (std::log(10) * a.x);
+        return result;
+    }
+
+    template<typename F>
+    Dual<F> log2(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        result.x = std::log2(a.x);
+        result.y = a.y / (std::log(2) * a.x);
+        return result;
+    }
+
+    template<typename F>
+    Dual<F> log1p(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        result.x = std::log1p(a.x);
+        result.y = a.y / a.x;
+        return result;
+    }
+
+    template<typename F>
+    Dual<F> pow(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        return a ^ b;
+    }
+
+    template<typename F>
+    Dual<F> sqrt(const dual::Dual<F> &a) {
+        return a ^ 0.5;
+    }
+
+    template<typename F>
+    Dual<F> cbrt(const dual::Dual<F> &a) {
+        return a ^ (1.0/3);
+    }
+
+    template<typename F>
+    Dual<F> hypot(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        return sqrt(a^2 + b^2);
+    }
+
+    template<typename F>
+    Dual<F> exp2(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        result.x = std::exp2(a.x);
+        result.y = a.y * (std::log(2) * pow(2, a.x));
+        return result;
+    }
+
+    template<typename F>
+    Dual<F> expm1(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        result.x = std::expm1(a.x);
+        result.y = a.y * std::exp(a.x);
         return result;
     }
 
@@ -216,11 +242,25 @@ namespace dual {
     }
 
     template<typename F>
+    Dual<F> tanh(const dual::Dual<F> &a) {
+        dual::Dual<F> result;
+        double ch = std::cosh(a.x);
+        result.x = std::tanh(a.x);
+        result.y = a.y / (ch * ch);
+        return result;
+    }
+
+    template<typename F>
     Dual<F> atanh(const dual::Dual<F> &a) {
         dual::Dual<F> result;
         result.x = std::atanh(a.x);
         result.y = a.y / (1 - a.x * a.x);
         return result;
+    }
+
+    template<typename F>
+    Dual<F> atan2(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        return atan(a / b);
     }
 }
 #endif
