@@ -33,27 +33,31 @@ namespace dual {
     }
 
     template<typename F>
-    Dual<F> operator+=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+    Dual<F> operator+=(dual::Dual<F> a, const dual::Dual<F> &b) {
         a.x += b.x;
         a.y += b.y;
+        return a;
     }
 
     template<typename F>
-    Dual<F> operator-=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+    Dual<F> operator-=(dual::Dual<F> a, const dual::Dual<F> &b) {
         a.x -= b.x;
         a.y -= b.y;
+        return a;
     }
 
     template<typename F>
-    Dual<F> operator*=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+    Dual<F> operator*=(dual::Dual<F> a, const dual::Dual<F> &b) {
         a.x *= b.x;
         a.y = a.x * b.y + b.x * a.y;
+        return a;
     }
 
     template<typename F>
-    Dual<F> operator/=(dual::Dual<F> &a, const dual::Dual<F> &b) {
+    Dual<F> operator/=(dual::Dual<F> a, const dual::Dual<F> &b) {
         a.x /= b.x;
         a.y = (b.x * a.y - a.x * b.y) / (b.x * b.x);
+        return a;
     }
 
     template<typename F>
@@ -128,12 +132,12 @@ namespace dual {
 
     template<typename F>
     Dual<F> cbrt(const dual::Dual<F> &a) {
-        return a ^ (1.0/3);
+        return a ^ (1.0 / 3);
     }
 
     template<typename F>
     Dual<F> hypot(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        return sqrt(a^2 + b^2);
+        return sqrt(a ^ 2 + b ^ 2);
     }
 
     template<typename F>
