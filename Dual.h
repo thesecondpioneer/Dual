@@ -2,7 +2,6 @@
 #define DUAL_DUAL_H
 
 #include <cmath>
-#include "Dual.h"
 
 namespace dual {
     template<typename F>
@@ -12,10 +11,13 @@ namespace dual {
 
         Dual();
 
-        Dual(F x_, F y_);
+        Dual(const F &x_, const F &y_);
+
+        explicit Dual(const F &x_);
 
         Dual(const Dual<F> &a);
 
+        //compound operators
         Dual<F> operator+=(const dual::Dual<F> &b) {
             x += b.x;
             y += b.y;
@@ -39,13 +41,40 @@ namespace dual {
             y = (b.x * y - x * b.y) / (b.x * b.x);
             return *this;
         }
+
+        // compound operators with a scalar
+        Dual<F> operator+=(const F &b) {
+            x = x + b;
+            return *this;
+        }
+
+        Dual<F> operator-=(const F &b) {
+            x = x - b;
+            return *this;
+        }
+
+        Dual<F> operator*=(const F &b) {
+            x = x * b;
+            return *this;
+        }
+
+        Dual<F> operator/=(const F &b) {
+            x = x / b;
+            return *this;
+        }
     };
+
+    template<typename F>
+    Dual<F>::Dual(const F &x_) {
+        x = x_;
+        y = F(1.0);
+    }
 
     template<typename F>
     Dual<F>::Dual() = default;
 
     template<typename F>
-    Dual<F>::Dual(F x_, F y_) {
+    Dual<F>::Dual(const F &x_, const F &y_) {
         x = x_;
         y = y_;
     }
@@ -56,211 +85,236 @@ namespace dual {
         y = a.y;
     }
 
+    //unary -
     template<typename F>
-    Dual<F> operator+(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+    inline __attribute__((always_inline)) Dual<F> operator+(const dual::Dual<F> &a) {
+        return a;
+    }
+
+    //unary +
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator-(const dual::Dual<F> &a) {
+        return Dual<F>(-a.x, -a.y);
+    }
+
+    //binary +
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator+(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         return Dual<F>(a) += b;
     }
 
+    //binary + with a scalar
     template<typename F>
-    Dual<F> operator-(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+    inline __attribute__((always_inline)) Dual<F> operator+(const dual::Dual<F> &a, const F &b) {
+        return Dual<F>(a) += b;
+    }
+
+    //binary -
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator-(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         return Dual<F>(a) -= b;
     }
 
+    //binary - with a scalar
     template<typename F>
-    Dual<F> operator*(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+    inline __attribute__((always_inline)) Dual<F> operator-(const dual::Dual<F> &a, const F &b) {
+        return Dual<F>(a) -= b;
+    }
+
+
+    //binary *
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator*(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         return Dual<F>(a) *= b;
     }
 
+    //binary * with a scalar
     template<typename F>
-    Dual<F> operator/(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+    inline __attribute__((always_inline)) Dual<F> operator*(const dual::Dual<F> &a, F &b) {
+        return Dual<F>(a) *= b;
+    }
+
+    //binary /
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator/(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         return Dual<F>(a) /= b;
     }
 
+    //binary / with a scalar
     template<typename F>
-    Dual<F> operator^(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        dual::Dual<F> result;
-        result.x = std::pow(a.x, b.x);
-        result.y = result.x * b.y * std::log(a.x) + a.y * b.x * std::pow(a.x, b.x - 1);
-        return result;
+    inline __attribute__((always_inline)) Dual<F> operator/(const dual::Dual<F> &a, const F &b) {
+        return Dual<F>(a) /= b;
+    }
+
+    //power operator
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator^(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        const F a_to_b = std::pow(a.x, b.x);
+        return Dual<F>(a_to_b, a_to_b * b.y * std::log(a.x) + a.y * b.x * std::pow(a.x, b.x - 1));
+    }
+
+    //power operator with dual scalar exponent
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator^(const dual::Dual<F> &a, const F &b) {
+        const F a_to_b = std::pow(a.x, b);
+        return Dual<F>(a_to_b, a.y * b * std::pow(a.x, b - 1));
+    }
+
+    //power operator with scalar base
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> operator^(const F &a, const dual::Dual<F> &b) {
+        const F a_to_b = std::pow(a, b.x);
+        return Dual<F>(a_to_b, a_to_b * b.y * std::log(a.x));
     }
 
     template<typename F>
-    Dual<F> log(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::log(a.x);
-        result.y = a.y / a.x;
-        return result;
+    inline __attribute__((always_inline)) Dual<F> abs(const dual::Dual<F> &a) {
+        return Dual<F>(abs(a.x), a.y * copysign(F(1.0), a.x));
     }
 
     template<typename F>
-    Dual<F> log10(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::log10(a.x);
-        result.y = a.y / (std::log(10) * a.x);
-        return result;
+    inline __attribute__((always_inline)) Dual<F> log(const dual::Dual<F> &a) {
+        return Dual<F>(std::log(a.x), a.y / a.x);
     }
 
     template<typename F>
-    Dual<F> log2(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::log2(a.x);
-        result.y = a.y / (std::log(2) * a.x);
-        return result;
+    inline __attribute__((always_inline)) Dual<F> log10(const dual::Dual<F> &a) {
+        return Dual<F>(std::log10(a.x), a.y / (std::log(F(10.0)) * a.x));
     }
 
     template<typename F>
-    Dual<F> log1p(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::log1p(a.x);
-        result.y = a.y / a.x;
-        return result;
+    inline __attribute__((always_inline)) Dual<F> log2(const dual::Dual<F> &a) {
+        return Dual<F>(std::log2(a.x), a.y / (std::log(F(2.0)) * a.x));
     }
 
+    //natural base log of a+1
     template<typename F>
-    Dual<F> pow(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+    inline __attribute__((always_inline)) Dual<F> log1p(const dual::Dual<F> &a) {
+        return Dual<F>(std::log1p(a.x), a.y / a.x);
+    }
+
+    // power function
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> pow(const dual::Dual<F> &a, const dual::Dual<F> &b) {
         return a ^ b;
     }
 
+    //power function with scalar exponent
     template<typename F>
-    Dual<F> sqrt(const dual::Dual<F> &a) {
-        return a ^ 0.5;
+    inline __attribute__((always_inline)) Dual<F> pow(const dual::Dual<F> &a, const F &b) {
+        return a ^ b;
+    }
+
+    //power function with scalar base
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> pow(const F &a, const dual::Dual<F> &b) {
+        return a ^ b;
+    }
+
+    //square root
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> sqrt(const dual::Dual<F> &a) {
+        const F sqrtx = std::sqrt(a.x);
+        return Dual<F>(sqrtx, a.y / F(2.0) * sqrtx);
+    }
+
+    //cubic root
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> cbrt(const dual::Dual<F> &a) {
+        const F cbrtx = std::cbrt(a.x);
+        return Dual<F>(cbrtx, a.y / F(3.0) * cbrtx * cbrtx);
     }
 
     template<typename F>
-    Dual<F> cbrt(const dual::Dual<F> &a) {
-        return a ^ (1.0 / 3);
+    inline __attribute__((always_inline)) Dual<F> hypot(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        const F hpab = std::hypot(a.x, b.y);
+        return Dual<F>(hpab, (a.x * a.y + b.x * b.y) / hpab);
     }
 
     template<typename F>
-    Dual<F> hypot(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        return sqrt(a ^ 2 + b ^ 2);
+    inline __attribute__((always_inline)) Dual<F> exp2(const dual::Dual<F> &a) {
+        const F exp2x = std::exp2(a.x);
+        return Dual<F>(exp2x, a.y * exp2x * std::log(F(2.0)));
     }
 
     template<typename F>
-    Dual<F> exp2(const dual::Dual<F> &a) {
+    inline __attribute__((always_inline)) Dual<F> expm1(const dual::Dual<F> &a) {
+        const F expm1x = std::expm1(a.x);
+        return Dual<F>(expm1x, a.y * (expm1x + F(1.0)));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> sin(const dual::Dual<F> &a) {
+        return Dual<F>(std::sin(a.x), a.y * std::cos(a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> cos(const dual::Dual<F> &a) {
+        return Dual<F>(std::cos(a.x), -a.y * std::sin(a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> exp(const dual::Dual<F> &a) {
+        const F expx = std::exp(a.x);
+        return Dual<F>(expx, a.y * expx);
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> asin(const dual::Dual<F> &a) {
+        return Dual<F>(std::asin(a.x), a.y / std::sqrt(F(1.0) - a.x * a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> acos(const dual::Dual<F> &a) {
+        return Dual<F>(std::acos(a.x), -a.y / std::sqrt(F(1.0) - a.x * a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> sinh(const dual::Dual<F> &a) {
+        return Dual<F>(std::sinh(a.x), a.y * std::cosh(a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> cosh(const dual::Dual<F> &a) {
+        return Dual<F>(std::cosh(a.x), a.y * std::sinh(a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> atan(const dual::Dual<F> &a) {
+        return Dual<F>(std::atan(a.x), a.y / (1 + a.x * a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> tan(const dual::Dual<F> &a) {
+        const F tanx = std::tan(a.x);
+        return Dual<F>(tanx, a.y * (F(1.0) + tanx * tanx));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> asinh(const dual::Dual<F> &a) {
+        return Dual<F>(std::asinh(a.x), a.y / std::sqrt(a.x * a.x + F(1.0)));;
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> acosh(const dual::Dual<F> &a) {
+        return Dual<F>(std::acosh(a.x), a.y / std::sqrt(a.x * a.x - F(1.0)));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> tanh(const dual::Dual<F> &a) {
         dual::Dual<F> result;
-        result.x = std::exp2(a.x);
-        result.y = a.y * (std::log(2) * pow(2, a.x));
-        return result;
+        const F tanhx = std::tanh(a.x);
+        return Dual<F>(tanhx, a.y * (F(1.0) - tanhx * tanhx));
     }
 
     template<typename F>
-    Dual<F> expm1(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::expm1(a.x);
-        result.y = a.y * std::exp(a.x);
-        return result;
+    inline __attribute__((always_inline)) Dual<F> atanh(const dual::Dual<F> &a) {
+        return Dual<F>(std::atanh(a.x), a.y / (F(1.0) - a.x * a.x));
     }
 
     template<typename F>
-    Dual<F> sin(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::sin(a.x);
-        result.y = a.y * std::cos(a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> cos(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::cos(a.x);
-        result.y = -a.y * std::sin(a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> exp(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::exp(a.x);
-        result.y = a.y * std::exp(a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> asin(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::asin(a.x);
-        result.y = a.y / std::sqrt(1 - a.x * a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> acos(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::asin(a.x);
-        result.y = -a.y / std::sqrt(1 + a.x * a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> sinh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::sinh(a.x);
-        result.y = a.y * std::cosh(a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> cosh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::cosh(a.x);
-        result.y = a.y * std::sinh(a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> atan(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::atan(a.x);
-        result.y = a.y / (1 + a.x * a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> tan(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::tan(a.x);
-        F c = std::cos(a.x);
-        result.y = a.y / (c * c);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> asinh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::asinh(a.x);
-        result.y = a.y / std::sqrt(1 + a.x * a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> acosh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::acosh(a.x);
-        result.y = a.y / std::sqrt(a.x * a.x - 1);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> tanh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        double ch = std::cosh(a.x);
-        result.x = std::tanh(a.x);
-        result.y = a.y / (ch * ch);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> atanh(const dual::Dual<F> &a) {
-        dual::Dual<F> result;
-        result.x = std::atanh(a.x);
-        result.y = a.y / (1 - a.x * a.x);
-        return result;
-    }
-
-    template<typename F>
-    Dual<F> atan2(const dual::Dual<F> &a, const dual::Dual<F> &b) {
-        return atan(a / b);
+    inline __attribute__((always_inline)) Dual<F> atan2(const dual::Dual<F> &a, const dual::Dual<F> &b) {
+        return Dual<F>(std::atan2(a.x, b.y), (-b.x * a.y + a.x * b.y) / (a.x * a.x + b.x * b.x));
     }
 }
 #endif
