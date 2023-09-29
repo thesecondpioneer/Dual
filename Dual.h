@@ -15,6 +15,30 @@ namespace dual {
         Dual(F x_, F y_);
 
         Dual(const Dual<F> &a);
+
+        Dual<F> operator+=(const dual::Dual<F> &b) {
+            x += b.x;
+            y += b.y;
+            return *this;
+        };
+
+        Dual<F> operator-=(const dual::Dual<F> &b) {
+            x -= b.x;
+            y -= b.y;
+            return *this;
+        };
+
+        Dual<F> operator*=(const dual::Dual<F> &b) {
+            x *= b.x;
+            y = x * b.y + b.x * y;
+            return *this;
+        }
+
+        Dual<F> operator/=(const dual::Dual<F> &b) {
+            x /= b.x;
+            y = (b.x * y - x * b.y) / (b.x * b.x);
+            return *this;
+        }
     };
 
     template<typename F>
@@ -30,34 +54,6 @@ namespace dual {
     Dual<F>::Dual(const Dual<F> &a) {
         x = a.x;
         y = a.y;
-    }
-
-    template<typename F>
-    Dual<F> operator+=(dual::Dual<F> a, const dual::Dual<F> &b) {
-        a.x += b.x;
-        a.y += b.y;
-        return a;
-    }
-
-    template<typename F>
-    Dual<F> operator-=(dual::Dual<F> a, const dual::Dual<F> &b) {
-        a.x -= b.x;
-        a.y -= b.y;
-        return a;
-    }
-
-    template<typename F>
-    Dual<F> operator*=(dual::Dual<F> a, const dual::Dual<F> &b) {
-        a.x *= b.x;
-        a.y = a.x * b.y + b.x * a.y;
-        return a;
-    }
-
-    template<typename F>
-    Dual<F> operator/=(dual::Dual<F> a, const dual::Dual<F> &b) {
-        a.x /= b.x;
-        a.y = (b.x * a.y - a.x * b.y) / (b.x * b.x);
-        return a;
     }
 
     template<typename F>
