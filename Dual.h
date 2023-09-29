@@ -173,6 +173,16 @@ namespace dual {
     }
 
     template<typename F>
+    inline __attribute__((always_inline)) Dual<F> ceil(const dual::Dual<F> &a) {
+        return Dual<F>(std::ceil(a.x));
+    }
+
+    template<typename F>
+    inline __attribute__((always_inline)) Dual<F> floor(const dual::Dual<F> &a) {
+        return Dual<F>(std::floor(a.x));
+    }
+
+    template<typename F>
     inline __attribute__((always_inline)) Dual<F> log(const dual::Dual<F> &a) {
         return Dual<F>(std::log(a.x), a.y / a.x);
     }
