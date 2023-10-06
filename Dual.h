@@ -93,6 +93,66 @@ namespace dual {
         y = a.y;
     }
 
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool isless(const Dual<F> &a, const Dual<F> &b) {
+        return std::isless(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool isgreater(const Dual<F> &a, const Dual<F> &b) {
+        return std::isgreater(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool islessequal(const Dual<F> &a, const Dual<F> &b) {
+        return std::islessequal(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool islessgreater(const Dual<F> &a, const Dual<F> &b) {
+        return std::islessgreater(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool isgreaterequal(const Dual<F> &a, const Dual<F> &b) {
+        return std::isgreaterequal(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool isunordered(const Dual<F> &a, const Dual<F> &b) {
+        return std::isunordered(a.x, b.x);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator<(const Dual<F> &a, const Dual<F> &b) {
+        return isless(a,b);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator>(const Dual<F> &a, const Dual<F> &b) {
+        return isgreater(a,b);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator<=(const Dual<F> &a, const Dual<F> &b) {
+        return islessequal(a,b);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator>=(const Dual<F> &a, const Dual<F> &b) {
+        return isgreaterequal(a,b);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator== (const Dual<F> &a, const Dual<F> &b) {
+        return (a.x == b.x && a.y == b.y);
+    }
+
+    template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) bool operator!= (const Dual<F> &a, const Dual<F> &b) {
+        return !(a.x == b.x && a.y == b.y);
+    }
+
     //unary +
     template<typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F> operator+(const Dual<F> &a) {
