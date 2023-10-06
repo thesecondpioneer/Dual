@@ -14,7 +14,7 @@ float y(float x) {
 void opt(float x, float &f, float &y) {
     float sx = std::sin(x), cx = std::cos(x), ctsx = std::pow(cx, sx);
     f = ctsx;
-    y = -(ctsx / cx) * sx * sx + ctsx * cx * std::log(cx);
+    y = -(ctsx / cx) * std::pow(sx, 2) + ctsx * cx * std::log(cx);
 }
 
 Dual<float> autod(Dual<float> x){
@@ -23,8 +23,9 @@ Dual<float> autod(Dual<float> x){
 
 int main() {
     float func, deriv;
+    std::cout.precision(16);
     Dual<float> der = autod(Dual<float>(1.5f, 1.0f));
     opt(1.5f, func, deriv);
-    std::cout << f(1.5) << ' ' << y(1.5) << std::endl << func << ' ' << deriv << std::endl << der.x << ' ' << der.y << std::endl;
+    std::cout << std::fixed << f(1.5) << ' ' << y(1.5) << std::endl << func << ' ' << deriv << std::endl << der.x << ' ' << der.y << std::endl;
     return 0;
 }
