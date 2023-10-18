@@ -2,6 +2,7 @@
 #define DUAL_DUAL_H
 
 #include <cmath>
+#in
 
 namespace dual {
     template<typename F>
