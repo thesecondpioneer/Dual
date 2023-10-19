@@ -397,7 +397,7 @@ namespace dual {
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> exp(const Dual<F, N> &a) {
         const F expx = std::exp(a.x);
-        return Dual<F, N>(expx, a.y * expx);
+        return Dual<F, N>(expx, expx * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
