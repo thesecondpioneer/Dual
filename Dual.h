@@ -16,7 +16,7 @@ namespace dual {
         }
 
         template<typename der>
-        EIGEN_STRONG_INLINE Dual(const F &x_, const Eigen::DenseBase<der> &y_){
+        EIGEN_STRONG_INLINE Dual(const F &x_, const Eigen::DenseBase <der> &y_) {
             x = x_;
             y = y_;
         }
@@ -38,27 +38,28 @@ namespace dual {
         }
 
         //compound operators
-        Dual<F, N> operator+=(const Dual<F, N> &b) {
+        inline __attribute__((always_inline)) Dual<F, N> operator+=(const Dual<F, N> &b) {
             x += b.x;
             y += b.y;
             return *this;
         };
 
-        Dual<F, N> operator-=(const Dual<F, N> &b) {
+        inline __attribute__((always_inline)) Dual<F, N> operator-=(const Dual<F, N> &b) {
             x -= b.x;
             y -= b.y;
             return *this;
         };
 
-        Dual<F, N> operator*=(const Dual<F, N> &b) {
-            x *= b.x;
+        inline __attribute__((always_inline)) Dual<F, N> operator*=(const Dual<F, N> &b) {
             y = x * b.y + b.x * y;
+            x *= b.x;
             return *this;
         }
 
-        Dual<F, N> operator/=(const Dual<F, N> &b) {
+        inline __attribute__((always_inline)) Dual<F, N> operator/=(const Dual<F, N> &b) {
             x /= b.x;
-            y = (b.x * y - x * b.y) / (b.x * b.x);
+            //x at this point is already divided by b.x which turns (b.x * y - x * b.y) / (b.x * b.x) into (y - x * b.y) / b.x
+            y = (y - x * b.y) / b.x;
             return *this;
         }
 
@@ -70,25 +71,25 @@ namespace dual {
         }
 
         // compound operators with a scalar
-        Dual<F, N> operator+=(const F &b) {
-            x = x + b;
+        inline __attribute__((always_inline)) Dual<F, N> operator+=(const F &b) {
+            x += b;
             return *this;
         }
 
-        Dual<F, N> operator-=(const F &b) {
+        inline __attribute__((always_inline)) Dual<F, N> operator-=(const F &b) {
             x = x - b;
             return *this;
         }
 
-        Dual<F, N> operator*=(const F &b) {
-            x = x * b;
-            y = y * b;
+        inline __attribute__((always_inline)) Dual<F, N> operator*=(const F &b) {
+            x *= b;
+            y *= b;
             return *this;
         }
 
-        Dual<F, N> operator/=(const F &b) {
-            x = x / b;
-            y = y / b;
+        inline __attribute__((always_inline)) Dual<F, N> operator/=(const F &b) {
+            x /= b;
+            y /= b;
             return *this;
         }
     };
@@ -168,69 +169,72 @@ namespace dual {
     //binary +
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator+(const Dual<F, N> &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) += b;
+        return Dual<F, N>(a.x + b.x, a.y + b.y);
     }
 
     //binary + with a scalar
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator+(const Dual<F, N> &a, const F &b) {
-        return Dual<F, N>(a) += b;
+        return Dual<F, N>(a.x + b, a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator+(const F &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) += b;
+        return Dual<F, N>(a + b.x, b.y);
     }
 
     //binary -
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator-(const Dual<F, N> &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) -= b;
+        return Dual<F, N>(a.x - b.x, a.y - b.y);
     }
 
     //binary - with a scalar
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator-(const Dual<F, N> &a, const F &b) {
-        return Dual<F, N>(a) -= b;
+        return Dual<F, N>(a.x - b, a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator-(const F &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) -= b;
+        return Dual<F, N>(a - b.x, -b.y);
     }
 
     //binary *
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator*(const Dual<F, N> &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) *= b;
+        return Dual<F, N>(a.x * b.x, a.x * b.y + b.x * a.y);
     }
 
     //binary * with a scalar
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator*(const Dual<F, N> &a, F &b) {
-        return Dual<F, N>(a) *= b;
+        return Dual<F, N>(a.x * b, b * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator*(const F &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) *= b;
+        return Dual<F, N>(a * b.x, b.y * a);
     }
 
     //binary /
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator/(const Dual<F, N> &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) /= b;
+        const F bxinv = F(1.0) / b.x, axbybx = a.x * bxinv;
+        return Dual<F, N>(a)(axbybx, (a.y - axbybx * b.y) * bxinv);
     }
 
     //binary / with a scalar
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator/(const Dual<F, N> &a, const F &b) {
-        return Dual<F, N>(a) /= b;
+        const F binv = F(1.0) / b;
+        return Dual<F, N>(a.x * binv, a.y * binv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> operator/(const F &a, const Dual<F, N> &b) {
-        return Dual<F, N>(a) /= b;
+        const F abybx = a / b.x;
+        return Dual<F, N>(abybx, b.y * (-abybx / b.x));
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -279,16 +283,15 @@ namespace dual {
             return a;
         } else {
             if (a.x < 0 && b.x == std::floor(b.x)) {
-                Eigen::Matrix<F,N,1> vn;
-                vn.setConstant(F());
-                if (b.y == vn) {
-                    return Dual<F, N>(std::pow(a.x, b.x), b.x * std::pow(a.x, b.x - F(1.0)) * a.y);
+                const F a_to_b = std::pow(a.x, b.x);
+                if (b.y == -b.y) {
+                    return Dual<F, N>(a_to_b, (b.x * a_to_b / a.x) * a.y);
                 }
-                return Dual<F, N>(std::pow(a.x, b.x), F(std::numeric_limits<double>::quiet_NaN()));
+                return Dual<F, N>(a_to_b, F(std::numeric_limits<double>::quiet_NaN()));
             }
         }
         const F a_to_b = std::pow(a.x, b.x);
-        return Dual<F, N>(a_to_b, a_to_b * b.y * std::log(a.x) + a.y * b.x * std::pow(a.x, b.x - F(1.0)));
+        return Dual<F, N>(a_to_b, b.y * (a_to_b * std::log(a.x)) + a.y * (b.x * a_to_b / a.x));
     }
 
     //power function with scalar exponent
@@ -355,7 +358,8 @@ namespace dual {
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
-    inline __attribute__((always_inline)) Dual<F, N> hypot(const Dual<F, N> &a, const Dual<F, N> &b, const Dual<F, N> &c) {
+    inline __attribute__((always_inline)) Dual<F, N>
+    hypot(const Dual<F, N> &a, const Dual<F, N> &b, const Dual<F, N> &c) {
         const F hpabc = std::hypot(a.x, b.x, c.x);
         return Dual<F, N>(hpabc, (a.x * a.y + b.x * b.y + c.x * c.y) / hpabc);
     }
