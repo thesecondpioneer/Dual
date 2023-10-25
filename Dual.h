@@ -9,7 +9,7 @@ namespace dual {
     struct Dual {
         static_assert(std::is_arithmetic_v<F>, "k");
         F x;
-        Eigen::Matrix<F, N, 1> y;
+        Eigen::Vector<F, N> y;
 
         Dual() : x() {
             y.setConstant(F());

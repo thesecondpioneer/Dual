@@ -121,6 +121,6 @@ int main() {
               << std::string(7, ' ') << dual_deriv.x << "    " << dual_deriv.y.transpose() << "     "
               << dual_time.total_time()
               << std::endl << "Ceres automatic differentiation:" << std::string(1, ' ') << ceres_deriv.a << "    "
-              << ceres_deriv.v.transpose() << "     " << ceres_time.total_time() << std::endl << "Us vs Ceres: " << ceres_time.total_time() - dual_time.total_time();
+              << ceres_deriv.v.transpose() << "     " << ceres_time.total_time() << std::endl << "Us vs Ceres: " << ceres_time.total_time() - dual_time.total_time() << " %" << 100*(ceres_time.total_time() - dual_time.total_time())/ceres_time.total_time();
     return 0;
 }
