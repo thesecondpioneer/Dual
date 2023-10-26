@@ -239,7 +239,7 @@ namespace dual {
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> abs(const Dual<F, N> &a) {
-        return Dual<F, N>(abs(a.x), a.y * copysign(F(1.0), a.x));
+        return Dual<F, N>(std::abs(a.x), a.y * copysign(F(1.0), a.x));
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -254,23 +254,27 @@ namespace dual {
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> log(const Dual<F, N> &a) {
-        return Dual<F, N>(std::log(a.x), a.y / a.x);
+        F inv = F(1.0) / a.x;
+        return Dual<F, N>(std::log(a.x), a.y * inv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> log10(const Dual<F, N> &a) {
-        return Dual<F, N>(std::log10(a.x), a.y / (std::log(F(10.0)) * a.x));
+        F inv = F(1.0) / (std::log(F(10.0)) * a.x);
+        return Dual<F, N>(std::log10(a.x), a.y * inv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> log2(const Dual<F, N> &a) {
-        return Dual<F, N>(std::log2(a.x), a.y / (std::log(F(2.0)) * a.x));
+        F inv = F(1.0) / (std::log(F(2.0)) * a.x);
+        return Dual<F, N>(std::log2(a.x), a.y * inv);
     }
 
     //natural base log of a+1
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> log1p(const Dual<F, N> &a) {
-        return Dual<F, N>(std::log1p(a.x), a.y / a.x);
+        F inv = F(1.0) / (a.x+F(1.0));
+        return Dual<F, N>(std::log1p(a.x), a.y * inv);
     }
 
     // power function
