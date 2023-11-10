@@ -481,3 +481,4 @@ namespace dual {
         return hypot(b, a);
     }
 }
+#endif
