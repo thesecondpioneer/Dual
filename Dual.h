@@ -57,9 +57,10 @@ namespace dual {
         }
 
         inline __attribute__((always_inline)) Dual<F, N> operator/=(const Dual<F, N> &b) {
-            x /= b.x;
+            const F inv = F(1.0)/b.x;
+            x *= inv;
             //x at this point is already divided by b.x which turns (b.x * y - x * b.y) / (b.x * b.x) into (y - x * b.y) / b.x
-            y = (y - x * b.y) / b.x;
+            y = (y - x * b.y) * inv;
             return *this;
         }
 
@@ -254,19 +255,23 @@ namespace dual {
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> log(const Dual<F, N> &a) {
-        F inv = F(1.0) / a.x;
+        const F inv = F(1.0) / a.x;
         return Dual<F, N>(std::log(a.x), a.y * inv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
-    inline __attribute__((always_inline)) Dual<F, N> log10(const Dual<F, N> &a) {
-        F inv = F(1.0) / (std::log(F(10.0)) * a.x);
+    inline __attribute__((always_inline)) Dual<F, N> log10(const Dual<F, N> &a)
+    //log(10) is precalced
+    {
+        const F inv = F(1.0) / (F(2.30258509299404568) * a.x);
         return Dual<F, N>(std::log10(a.x), a.y * inv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
-    inline __attribute__((always_inline)) Dual<F, N> log2(const Dual<F, N> &a) {
-        F inv = F(1.0) / (std::log(F(2.0)) * a.x);
+    inline __attribute__((always_inline)) Dual<F, N> log2(const Dual<F, N> &a)
+    //log(2) is precalced
+    {
+        const F inv = F(1.0) / (F(0.6931471805599453) * a.x);
         return Dual<F, N>(std::log2(a.x), a.y * inv);
     }
 
@@ -296,6 +301,7 @@ namespace dual {
         const F a_to_b = std::pow(a.x, b.x), a_to_bm1 = a_to_b / a.x;
         return Dual<F, N>(a_to_b, (b.x * a_to_bm1) * a.y + (a_to_b * std::log(a.x)) * b.y);
     }
+
 
     //power function with scalar exponent
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>

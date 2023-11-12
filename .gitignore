@@ -81,3 +81,5 @@ fabric.properties
 /.idea/vcs.xml
 # Libeigen
 /Eigen/
+#ceres
+jet.h
