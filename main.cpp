@@ -4,6 +4,7 @@
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 #include "Eigen/Core"
+#include "iomanip"
 
 double f(double x, double y, double b1, double b2, double b3, double b4) {
     return b1 * pow(1.0 + exp(b2 - b3 * x), -1.0 / b4) - y;
@@ -121,23 +122,25 @@ int main() {
                   << std::string(62, ' ') << "Average time/ns" << std::endl;
 
         std::cout << std::fixed << "Analytical derivative:" << std::string(11, ' ') << analyt_func
-                  << std::string(4, ' ') << analyt_deriv.transpose() << "     " << analyt_time.total_time()/count1
-                  << std::endl;
+                  << std::string(4, ' ') << analyt_deriv.transpose() << std::string(5, ' ') << std::setw(15)
+                  << std::setprecision(2) << analyt_time.total_time()/count1 << std::endl << std::setprecision(16);
 
-        std::cout << "Optimized analytical derivative: " << opt_func << std::string(4, ' ') << opt_deriv.transpose()
-                  << std::string(5, ' ') << opt_time.total_time()/count2 << std::endl;
+        std::cout << "Optimized analytical derivative: " << opt_func
+                  << std::string(4, ' ') << opt_deriv.transpose() << std::string(5, ' ') << std::setw(15)
+                  << std::setprecision(2) << opt_time.total_time()/count2 << std::endl << std::setprecision(16);
 
         std::cout << "Automatic differentiation:" << std::string(7, ' ') << dual_deriv.x
-                  << std::string(4, ' ') << dual_deriv.y.transpose() << std::string(5, ' ')
-                  << dual_time.total_time()/count3 << std::endl;
+                  << std::string(4, ' ') << dual_deriv.y.transpose() << std::string(5, ' ') << std::setw(15)
+                  << std::setprecision(2) << dual_time.total_time()/count3 << std::endl << std::setprecision(16);
 
-        std::cout << "Ceres automatic differentiation:" << std::string(1, ' ') << ceres_deriv.a << std::string(4, ' ')
-                  << ceres_deriv.v.transpose() << std::string(5, ' ') << ceres_time.total_time()/count4 << std::endl;
+        std::cout << "Ceres automatic differentiation:" << std::string(1, ' ') << ceres_deriv.a
+                  << std::string(4, ' ') << ceres_deriv.v.transpose() << std::string(5, ' ') << std::setw(15)
+                  << std::setprecision(2) << ceres_time.total_time()/count4 << std::endl << std::setprecision(16);
 
-        std::cout << "Time difference compared to Ceres: "
-                  << ceres_time.total_time() - dual_time.total_time() << "ns, "
+        std::cout << std::endl << "Time difference compared to Ceres: " << std::setprecision(2)
+                  << ceres_time.total_time() / count4 - dual_time.total_time() / count3  << "ns, "
                   << 100 * (ceres_time.total_time() - dual_time.total_time()) / ceres_time.total_time() << "%"
-                  << std::endl;
+                  << std::endl << std::setprecision(16);
 
     } else if (mode == "cr") { //mode for comparing the precision of functions
         std::cout.precision(16);
