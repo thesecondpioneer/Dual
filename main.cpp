@@ -42,8 +42,9 @@ autodcr(double x, double y, ceres::Jet<double, 4> b1, ceres::Jet<double, 4> b2, 
 int main() {
     std::string mode;
     std::cin >> mode;
-    if (mode == "vs") {
+    if (mode == "vs") { //mode for comparing the time performance
         double opt_func, analyt_func;
+        int count1 = 0, count2 = 0, count3 = 0, count4 = 0;
         Eigen::Matrix<double, 4, 1> opt_deriv, analyt_deriv;
         dual::Dual<double, 4> dual_deriv;
         ceres::Jet<double, 4> ceres_deriv;
@@ -56,6 +57,7 @@ int main() {
                     for (double b2 = 1; b2 <= 1.1; b2 += 0.02) {
                         for (double b3 = 1; b3 <= 1.1; b3 += 0.02) {
                             for (double b4 = 1; b4 <= 1.1; b4 += 0.02) {
+                                count1++;
                                 opt(x, y, b1, b2, b3, b4, opt_func, opt_deriv);
                             }
                         }
@@ -71,6 +73,7 @@ int main() {
                     for (double b2 = 1; b2 <= 1.1; b2 += 0.02) {
                         for (double b3 = 1; b3 <= 1.1; b3 += 0.02) {
                             for (double b4 = 1; b4 <= 1.1; b4 += 0.02) {
+                                count2++;
                                 analyt_func = f(x, y, b1, b2, b3, b4);
                                 analyt_deriv = der(x, y, b1, b2, b3, b4);
                             }
@@ -87,6 +90,7 @@ int main() {
                     for (double b2 = 1; b2 <= 1.1; b2 += 0.02) {
                         for (double b3 = 1; b3 <= 1.1; b3 += 0.02) {
                             for (double b4 = 1; b4 <= 1.1; b4 += 0.02) {
+                                count3++;
                                 ceres_deriv = autodcr(x, y, ceres::Jet<double, 4>(b1, 0), ceres::Jet<double, 4>(b2, 1),
                                                       ceres::Jet<double, 4>(b3, 2), ceres::Jet<double, 4>(b4, 3));
                             }
@@ -103,6 +107,7 @@ int main() {
                     for (double b2 = 1; b2 <= 1.1; b2 += 0.02) {
                         for (double b3 = 1; b3 <= 1.1; b3 += 0.02) {
                             for (double b4 = 1; b4 <= 1.1; b4 += 0.02) {
+                                count4++;
                                 dual_deriv = autod(x, y, dual::Dual<double, 4>(b1, 0), dual::Dual<double, 4>(b2, 1),
                                                    dual::Dual<double, 4>(b3, 2), dual::Dual<double, 4>(b4, 3));
                             }
@@ -112,23 +117,33 @@ int main() {
             }
         }
         dual_time.stop();
-        std::cout << std::string(33, ' ') << "Last function value  " << "  Last derivative value"
-                  << std::string(63, ' ')
-                  << "Time" << std::endl
-                  << std::fixed << "Analytical derivative:" << std::string(11, ' ') << analyt_func << "    "
-                  << analyt_deriv.transpose()
-                  << "     " << analyt_time.total_time() << std::endl << "Optimized analytical derivative: " << opt_func
-                  << "    " << opt_deriv.transpose() << "     " << opt_time.total_time() << std::endl
-                  << "Automatic differentiation:"
-                  << std::string(7, ' ') << dual_deriv.x << "    " << dual_deriv.y.transpose() << "     "
-                  << dual_time.total_time()
-                  << std::endl << "Ceres automatic differentiation:" << std::string(1, ' ') << ceres_deriv.a << "    "
-                  << ceres_deriv.v.transpose() << "     " << ceres_time.total_time() << std::endl << "Us vs Ceres: "
-                  << ceres_time.total_time() - dual_time.total_time() << " %"
-                  << 100 * (ceres_time.total_time() - dual_time.total_time()) / ceres_time.total_time();
-    } else if (mode == "cr") {
+        std::cout << std::string(33, ' ') << "Last function value     Last derivative value"
+                  << std::string(62, ' ') << "Average time/ns" << std::endl;
+
+        std::cout << std::fixed << "Analytical derivative:" << std::string(11, ' ') << analyt_func
+                  << std::string(4, ' ') << analyt_deriv.transpose() << "     " << analyt_time.total_time()/count1
+                  << std::endl;
+
+        std::cout << "Optimized analytical derivative: " << opt_func << std::string(4, ' ') << opt_deriv.transpose()
+                  << std::string(5, ' ') << opt_time.total_time()/count2 << std::endl;
+
+        std::cout << "Automatic differentiation:" << std::string(7, ' ') << dual_deriv.x
+                  << std::string(4, ' ') << dual_deriv.y.transpose() << std::string(5, ' ')
+                  << dual_time.total_time()/count3 << std::endl;
+
+        std::cout << "Ceres automatic differentiation:" << std::string(1, ' ') << ceres_deriv.a << std::string(4, ' ')
+                  << ceres_deriv.v.transpose() << std::string(5, ' ') << ceres_time.total_time()/count4 << std::endl;
+
+        std::cout << "Time difference compared to Ceres: "
+                  << ceres_time.total_time() - dual_time.total_time() << "ns, "
+                  << 100 * (ceres_time.total_time() - dual_time.total_time()) / ceres_time.total_time() << "%"
+                  << std::endl;
+
+    } else if (mode == "cr") { //mode for comparing the precision of functions
         std::cout.precision(16);
-        for(double x = 1; x <= 10; x+=0.1){
+        double eps, merr = -1;
+        int c = 0;
+        for(double x = 1; x <= 10; x+=0.01){
             dual::Dual<double, 1> t1(x, Eigen::Vector<double, 1>(pow(x, 2))), t1r;
             ceres::Jet<double, 1> t1c(x, Eigen::Vector<double, 1>(pow(x, 2))), t1cr;
             dual::Dual<double, 2> t2(x, Eigen::Vector<double, 2>(pow(x, 2), pow(x, 3))), t2r;
@@ -170,7 +185,18 @@ int main() {
                 std::cout << x << std::endl << std::fixed << t1r.x << ' ' << t1cr.a << std::endl << t1r.y << std::endl << t1cr.v;
                 break;
             }
+            t2r = dual::pow(t2, t2);
+            t2cr = ceres::pow(t2c, t2c);
+            Eigen::Vector<double, 2>t2rd = t2r.y - t2cr.v;
+            if ((t2r.y != t2cr.v) or (t2r.x != t2cr.a)){
+                std::cerr << "error in pow" << std::endl;
+                std::cout << x << std::endl << std::fixed << t2r.x << ' ' << t2cr.a << std::endl << t2r.y << std::endl << t2cr.v << std::endl;
+                c++;
+                merr = std::max((t2r.y - t2cr.v).array().abs().sum(), merr);
+                //break;
+            }
         }
+        std::cout << c << "/1000 errors with a maximal error of " << merr << std::endl;
     }
     return 0;
 }

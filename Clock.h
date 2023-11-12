@@ -1,28 +1,23 @@
-#ifndef _STOPWATCH_H
-#define _STOPWATCH_H
 #include <chrono>
-
-using namespace std::literals;
-
-template <class Clock = std::chrono::high_resolution_clock>
-class stopwatch {
+template <class Resolution = std::chrono::nanoseconds>
+class stopwatch
+{
 public:
-    using clock = Clock;
+    using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
+            std::chrono::high_resolution_clock,
+            std::chrono::steady_clock>;
 
-    stopwatch() : _timer(), _tic(), _total_time(0.0) {}
+    stopwatch() : timer_(), tic_(), total_time_(0.0) {}
     ~stopwatch() {}
 
-    inline void start() { _tic = clock::now(); }
-    inline void stop() { _timer = clock::now() - _tic; _total_time += _timer.count(); }
-    inline double time() { return _timer.count(); }
-    inline double total_time() { return _total_time; }
+    inline void start() { tic_ = clock::now(); }
+    inline void stop() { timer_ = clock::now() - tic_; total_time_ += timer_.count(); }
+    inline double time() const { return  timer_.count(); }
+    inline double total_time() const { return total_time_; }
+
 
 private:
-    std::chrono::duration<double> _timer;
-    typename clock::time_point _tic;
-    double _total_time;
+    std::chrono::duration<double, typename Resolution::period> timer_;
+    typename clock::time_point tic_;
+    double total_time_;
 };
-
-
-
-#endif

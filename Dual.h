@@ -285,23 +285,22 @@ namespace dual {
                 return Dual<F, N>(F());
             }
             return a;
-        } else {
-            if (a.x < 0 && b.x == std::floor(b.x)) {
-                const F a_to_b = std::pow(a.x, b.x);
-                if (b.y == -b.y) {
-                    return Dual<F, N>(a_to_b, (b.x * a_to_b / a.x) * a.y);
-                }
-                return Dual<F, N>(a_to_b, F(std::numeric_limits<double>::quiet_NaN()));
-            }
         }
-        const F a_to_b = std::pow(a.x, b.x);
-        return Dual<F, N>(a_to_b, b.y * (a_to_b * std::log(a.x)) + a.y * (b.x * a_to_b / a.x));
+        if (a.x < 0 && b.x == std::floor(b.x)) {
+            const F a_to_bm1 = std::pow(a.x, b.x - F(1.0)), a_to_b = a_to_bm1 * a.x;
+            if (b.y == -b.y) {
+                return Dual<F, N>(a_to_b, (b.x * a_to_bm1) * a.y);
+            }
+            return Dual<F, N>(a_to_b, F(std::numeric_limits<double>::quiet_NaN()));
+        }
+        const F a_to_b = std::pow(a.x, b.x), a_to_bm1 = a_to_b / a.x;
+        return Dual<F, N>(a_to_b, (b.x * a_to_bm1) * a.y + (a_to_b * std::log(a.x)) * b.y);
     }
 
     //power function with scalar exponent
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> pow(const Dual<F, N> &a, const F &b) {
-        if (a.x == 0 && b.x >= 1) {
+        if (a.x == 0 && b >= 1) {
             if (b > 1) {
                 return Dual<F, N>(F());
             }
@@ -333,27 +332,27 @@ namespace dual {
     //square root
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> sqrt(const Dual<F, N> &a) {
-        const F sqrtx = std::sqrt(a.x);
-        return Dual<F, N>(sqrtx, a.y / F(2.0) * sqrtx);
+        const F sqrtx = std::sqrt(a.x), inv = F(1.0) / (F(2.0) * sqrtx);
+        return Dual<F, N>(sqrtx, a.y * inv);
     }
 
     //cubic root
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> cbrt(const Dual<F, N> &a) {
-        const F cbrtx = std::cbrt(a.x);
-        return Dual<F, N>(cbrtx, a.y / F(3.0) * cbrtx * cbrtx);
+        const F cbrtx = std::cbrt(a.x), inv = F(1.0) / (F(3.0) * std::cbrt(a.x*a.x));
+        return Dual<F, N>(cbrtx, a.y * inv);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> hypot(const Dual<F, N> &a, const Dual<F, N> &b) {
         const F hpab = std::hypot(a.x, b.x);
-        return Dual<F, N>(hpab, (a.x * a.y + b.x * b.y) / hpab);
+        return Dual<F, N>(hpab, (a.x / hpab * a.y + b.x / hpab * b.y));
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> hypot(const F &a, const Dual<F, N> &b) {
         const F hpab = std::hypot(a, b.x);
-        return Dual<F, N>(hpab, (b.x * b.y) / hpab);
+        return Dual<F, N>(hpab, b.x / hpab * b.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -365,41 +364,41 @@ namespace dual {
     inline __attribute__((always_inline)) Dual<F, N>
     hypot(const Dual<F, N> &a, const Dual<F, N> &b, const Dual<F, N> &c) {
         const F hpabc = std::hypot(a.x, b.x, c.x);
-        return Dual<F, N>(hpabc, (a.x * a.y + b.x * b.y + c.x * c.y) / hpabc);
+        return Dual<F, N>(hpabc, a.x / hpabc * a.y + b.x / hpabc * b.y + c.x / hpabc * c.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> hypot(const F &a, const Dual<F, N> &b, const Dual<F, N> &c) {
         const F hpabc = std::hypot(a.x, b.x, c.x);
-        return Dual<F, N>(hpabc, (b.x * b.y + c.x * c.y) / hpabc);
+        return Dual<F, N>(hpabc, b.x / hpabc * b.y + c.x / hpabc * c.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> hypot(const F &a, const F &b, const Dual<F, N> &c) {
         const F hpabc = std::hypot(a.x, b.x, c.x);
-        return Dual<F, N>(hpabc, c.x * c.y / hpabc);
+        return Dual<F, N>(hpabc, c.x / hpabc * c.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> exp2(const Dual<F, N> &a) {
         const F exp2x = std::exp2(a.x);
-        return Dual<F, N>(exp2x, a.y * exp2x * std::log(F(2.0)));
+        return Dual<F, N>(exp2x, exp2x * F(0.6931471805599453) * a.y); //precalced log(2)
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> expm1(const Dual<F, N> &a) {
         const F expm1x = std::expm1(a.x);
-        return Dual<F, N>(expm1x, a.y * (expm1x + F(1.0)));
+        return Dual<F, N>(expm1x, (expm1x + F(1.0)) * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> sin(const Dual<F, N> &a) {
-        return Dual<F, N>(std::sin(a.x), a.y * std::cos(a.x));
+        return Dual<F, N>(std::sin(a.x), std::cos(a.x) * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> cos(const Dual<F, N> &a) {
-        return Dual<F, N>(std::cos(a.x), -a.y * std::sin(a.x));
+        return Dual<F, N>(std::cos(a.x), -std::sin(a.x) * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -410,70 +409,77 @@ namespace dual {
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> asin(const Dual<F, N> &a) {
-        return Dual<F, N>(std::asin(a.x), a.y / std::sqrt(F(1.0) - a.x * a.x));
+        const F inv = F(1.0) / std::sqrt(F(1.0) - a.x * a.x);
+        return Dual<F, N>(std::asin(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> acos(const Dual<F, N> &a) {
-        return Dual<F, N>(std::acos(a.x), -a.y / std::sqrt(F(1.0) - a.x * a.x));
+        const F inv = -F(1.0) / std::sqrt(F(1.0) - a.x * a.x);
+        return Dual<F, N>(std::acos(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> sinh(const Dual<F, N> &a) {
-        return Dual<F, N>(std::sinh(a.x), a.y * std::cosh(a.x));
+        return Dual<F, N>(std::sinh(a.x), std::cosh(a.x) * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> cosh(const Dual<F, N> &a) {
-        return Dual<F, N>(std::cosh(a.x), a.y * std::sinh(a.x));
+        return Dual<F, N>(std::cosh(a.x), std::sinh(a.x) * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> atan(const Dual<F, N> &a) {
-        return Dual<F, N>(std::atan(a.x), a.y / (1 + a.x * a.x));
+        const F inv = F(1.0) / (F(1.0) + a.x * a.x);
+        return Dual<F, N>(std::atan(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> tan(const Dual<F, N> &a) {
-        const F tanx = std::tan(a.x);
-        return Dual<F, N>(tanx, a.y * (F(1.0) + tanx * tanx));
+        const F tanx = std::tan(a.x), tmp = (F(1.0) + tanx * tanx);
+        return Dual<F, N>(tanx, tmp * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> asinh(const Dual<F, N> &a) {
-        return Dual<F, N>(std::asinh(a.x), a.y / std::sqrt(a.x * a.x + F(1.0)));
+        const F inv = F(1.0) / std::sqrt(a.x * a.x + F(1.0));
+        return Dual<F, N>(std::asinh(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> acosh(const Dual<F, N> &a) {
-        return Dual<F, N>(std::acosh(a.x), a.y / std::sqrt(a.x * a.x - F(1.0)));
+        const F inv = F(1.0) / std::sqrt(a.x * a.x - F(1.0));
+        return Dual<F, N>(std::acosh(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> tanh(const Dual<F, N> &a) {
         Dual<F, N> result;
-        const F tanhx = std::tanh(a.x);
-        return Dual<F, N>(tanhx, a.y * (F(1.0) - tanhx * tanhx));
+        const F tanhx = std::tanh(a.x), tmp = (F(1.0) - tanhx * tanhx);
+        return Dual<F, N>(tanhx, tmp * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> atanh(const Dual<F, N> &a) {
-        return Dual<F, N>(std::atanh(a.x), a.y / (F(1.0) - a.x * a.x));
+        const F inv = F(1.0) / (F(1.0) - a.x * a.x);
+        return Dual<F, N>(std::atanh(a.x), inv * a.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> atan2(const Dual<F, N> &a, const Dual<F, N> &b) {
-        return Dual<F, N>(std::atan2(a.x, b.y), (-b.x * a.y + a.x * b.y) / (a.x * a.x + b.x * b.x));
+        const F inv = F(1.0) / (a.x * a.x + b.x * b.x);
+        return Dual<F, N>(std::atan2(a.x, b.y), -b.x * inv * a.y + a.x * inv * b.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> atan2(const F &a, const Dual<F, N> &b) {
-        return Dual<F, N>(std::atan2(a, b.y), (a * b.y) / (a * a + b.x * b.x));
+        return Dual<F, N>(std::atan2(a, b.y), a  / (a * a + b.x * b.x) * b.y);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> atan2(const Dual<F, N> &a, const F &b) {
-        return hypot(b, a);
+        return atan2(b, a);
     }
 }
 #endif
