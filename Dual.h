@@ -487,5 +487,46 @@ namespace dual {
     inline __attribute__((always_inline)) Dual<F, N> atan2(const Dual<F, N> &a, const F &b) {
         return atan2(b, a);
     }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_j0(const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_j(0,a.x), -std::cyl_bessel_j(1, a.x) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_j1(const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_j(1,a.x),
+                          F(0.5) * (std::cyl_bessel_j(0, a.x) - std::cyl_bessel_j(2, a.x)) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_jn(int n, const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_j(n,a.x),
+                          F(0.5) * (std::cyl_bessel_j(n-1, a.x) - std::cyl_bessel_j(n+1, a.x)) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_i0(const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_i(0,a.x), std::cyl_bessel_i(1, a.x) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_i1(const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_i(1,a.x),
+                          F(0.5) * (std::cyl_bessel_i(0, a.x) + std::cyl_bessel_i(2, a.x)) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_in(int n, const Dual<F, N> &a) {
+        return Dual<F, N>(std::cyl_bessel_i(n,a.x),
+                          F(0.5) * (std::cyl_bessel_i(n-1, a.x) + std::cyl_bessel_i(n+1, a.x)) * a.y);
+    }
+
+    template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline __attribute__((always_inline)) Dual<F, N> bessel_sph_jn(int n, const Dual<F, N> &a) {
+        const F tmp = std::cyl_bessel_i(n,a.x);
+        return Dual<F, N>(tmp,
+                          (-std::sph_bessel(n+1, a.x) + F(n / a.x) * tmp) * a.y);
+    }
 }
 #endif
