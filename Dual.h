@@ -461,7 +461,6 @@ namespace dual {
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline __attribute__((always_inline)) Dual<F, N> tanh(const Dual<F, N> &a) {
-        Dual<F, N> result;
         const F tanhx = std::tanh(a.x), tmp = (F(1.0) - tanhx * tanhx);
         return Dual<F, N>(tanhx, tmp * a.y);
     }
