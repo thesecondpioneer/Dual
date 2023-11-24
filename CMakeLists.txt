@@ -17,6 +17,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 add_executable(Dual main.cpp Dual.h
         Clock.h
         jet.h
+        SparseDual.h
 )
 #target_link_libraries(Dual Ceres::ceres)
 #target_link_libraries(Dual Eigen3::Eigen)
