@@ -7,8 +7,15 @@
 //#include "glog/logging.h"
 #include "eigen/Eigen/Core"
 #include "iomanip"
+#include <map>
+#include <vector>
+#include <random>
 
-void pprint(std::string s, double fval, Eigen::Matrix<double, 4, 1> der, double avgtime){
+std::random_device rd;
+std::mt19937 rng(rd());
+std::uniform_int_distribution<int> uni(-50, 50);
+
+void pprint(std::string s, double fval, Eigen::Matrix<double, 4, 1> der, double avgtime) {
     printf("%-35s%.16f    ", s.c_str(), fval);
     std::cout << std::fixed << std::setprecision(16) << der.transpose() << std::string(5, ' ');
     printf("%.2f\n", avgtime);
@@ -50,9 +57,24 @@ autodcr(double x, double y, ceres::Jet<double, 4> b1, ceres::Jet<double, 4> b2, 
 }
 
 dual::SparseDual<double, 4>
-autods(double x, double y, dual::SparseDual<double, 4> b1, dual::SparseDual<double, 4> b2, dual::SparseDual<double, 4> b3,
-      dual::SparseDual<double, 4> b4) {
+autods(double x, double y, dual::SparseDual<double, 4> b1, dual::SparseDual<double, 4> b2,
+       dual::SparseDual<double, 4> b3,
+       dual::SparseDual<double, 4> b4) {
     return b1 * pow(1.0 + exp(b2 - b3 * x), -1.0 / b4) - y;
+}
+
+template<typename T, typename F>
+std::vector<T> minsq(const std::vector<std::pair<T, T>> &points, std::map<int, std::map<int, F>> &D) {
+    std::vector<T> result;
+    for (int i = 0; i < D.size(); i++) {
+        for (auto const &[j, d]: D[i]) {
+            if (i < j) {
+                result.push_back(
+                        dual::hypot(points[i].first - points[j].first, points[i].second - points[j].second) - d);
+            }
+        }
+    }
+    return result;
 }
 
 int main() {
@@ -143,8 +165,10 @@ int main() {
                         for (double b3 = 1; b3 <= 1.1; b3 += 0.02) {
                             for (double b4 = 1; b4 <= 1.1; b4 += 0.02) {
                                 count5++;
-                                sparse_deriv = autods(x, y, dual::SparseDual<double, 4>(b1, 0), dual::SparseDual<double, 4>(b2, 1),
-                                                   dual::SparseDual<double, 4>(b3, 2), dual::SparseDual<double, 4>(b4, 3));
+                                sparse_deriv = autods(x, y, dual::SparseDual<double, 4>(b1, 0),
+                                                      dual::SparseDual<double, 4>(b2, 1),
+                                                      dual::SparseDual<double, 4>(b3, 2),
+                                                      dual::SparseDual<double, 4>(b4, 3));
                             }
                         }
                     }
@@ -159,11 +183,12 @@ int main() {
         pprint("Optimized analytical derivative:", opt_func, opt_deriv, opt_time.total_time() / count2);
         pprint("Automatic differentiation:", dual_deriv.x, dual_deriv.y, dual_time.total_time() / count3);
         pprint("Ceres automatic differentiation:", ceres_deriv.a, ceres_deriv.v, ceres_time.total_time() / count4);
-        pprint("Sparse automatic differentiation:", sparse_deriv.x, sparse_deriv.y.toDense(), sparse_time.total_time() / count5);
+        pprint("Sparse automatic differentiation:", sparse_deriv.x, sparse_deriv.y.toDense(),
+               sparse_time.total_time() / count5);
 
         printf("Time difference compared to Ceres: %.2fns, %.2f%%",
                ceres_time.total_time() / count4 - dual_time.total_time() / count3,
-                100 * (ceres_time.total_time() - dual_time.total_time()) / ceres_time.total_time());
+               100 * (ceres_time.total_time() - dual_time.total_time()) / ceres_time.total_time());
     } else if (mode == "cr") { //mode for comparing the precision of functions
         std::cout.precision(16);
         double eps, merr = -1;
@@ -228,6 +253,29 @@ int main() {
             }
         }
         std::cout << c << "/1000 errors with a maximal error of " << merr << std::endl;
+    } else if (mode == "jac") {
+        std::vector<std::pair<dual::Dual<double, 10>, dual::Dual<double, 10>>> points(6);
+        std::map<int, std::map<int, double>> D;
+        std::vector<std::vector<double>> A(6, std::vector<double>(6));
+        for (int i = 0; i < 6; i++) {
+            points[i].first.x = double(uni(rng));
+            points[i].second.x = double(uni(rng));
+        }
+        for (int i = 1; i < 6; i++) {
+            points[i].first.y[2 * i - 2] = 1.0;
+            points[i].second.y[2 * i - 1] = 1.0;
+        }
+        for (int i = 0; i < 6; i++) {
+            for (int j = i; j < 6; j++) {
+                D[i][j] = std::hypot(points[i].first.x - points[j].first.x, points[i].second.x - points[j].second.x)
+                          + double(uni(rng)) / 230;
+                A[i][j] = std::hypot(points[i].first.x - points[j].first.x, points[i].second.x - points[j].second.x);
+            }
+        }
+        std::vector<dual::Dual<double, 10>> J = minsq<dual::Dual<double, 10>, double>(points, D);
+        for (int i = 0; i < J.size(); i++) {
+            std::cout << std::fixed << J[i].y.transpose() << std::endl;
+        }
     }
     return 0;
 }
