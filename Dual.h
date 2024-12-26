@@ -2,7 +2,7 @@
 #define DUAL_DUAL_H
 
 #include <cmath>
-#include "eigen/Eigen/Core"
+#include "Eigen/Core"
 
 namespace dual {
     template<typename F, int N>
@@ -209,7 +209,7 @@ namespace dual {
 
     //binary * with a scalar
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
-    inline __attribute__((always_inline)) Dual<F, N> operator*(const Dual<F, N> &a, F &b) {
+    inline __attribute__((always_inline)) Dual<F, N> operator*(const Dual<F, N> &a, const F &b) {
         return Dual<F, N>(a.x * b, b * a.y);
     }
 
