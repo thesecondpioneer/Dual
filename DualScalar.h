@@ -83,7 +83,48 @@ namespace dual {
             return *this;
         }
     };
-
+    using std::abs;
+    using std::acos;
+    using std::asin;
+    using std::atan;
+    using std::atan2;
+    using std::cbrt;
+    using std::ceil;
+    using std::copysign;
+    using std::cos;
+    using std::cosh;
+#ifndef __clang__
+    using std::cyl_bessel_j;
+    using std::cyl_bessel_i;
+    using std::sph_bessel;
+#endif  // CERES_HAS_CPP17_BESSEL_FUNCTIONS
+    using std::erf;
+    using std::erfc;
+    using std::exp;
+    using std::exp2;
+    using std::expm1;
+    using std::fdim;
+    using std::floor;
+    using std::fma;
+    using std::fmax;
+    using std::fmin;
+    using std::fpclassify;
+    using std::hypot;
+    using std::isfinite;
+    using std::isinf;
+    using std::isnan;
+    using std::isnormal;
+    using std::log;
+    using std::log10;
+    using std::log1p;
+    using std::log2;
+    using std::pow;
+    using std::signbit;
+    using std::sin;
+    using std::sinh;
+    using std::sqrt;
+    using std::tan;
+    using std::tanh;
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline bool isless(const DualScalar<F> &a, const DualScalar<F> &b) {
         return std::isless(a.x, b.x);
@@ -106,13 +147,18 @@ namespace dual {
 
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline bool isgreaterequal(const DualScalar<F> &a,
-                                                              const DualScalar<F> &b) {
+                               const DualScalar<F> &b) {
         return std::isgreaterequal(a.x, b.x);
     }
 
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline bool isunordered(const DualScalar<F> &a, const DualScalar<F> &b) {
         return std::isunordered(a.x, b.x);
+    }
+
+    template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
+    inline bool fpclassify(const DualScalar<F> &a) {
+        return fpclassify(a.x);
     }
 
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -160,7 +206,7 @@ namespace dual {
 // binary +
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline DualScalar<F> operator+(const DualScalar<F> &a,
-                                                           const DualScalar<F> &b) {
+                                   const DualScalar<F> &b) {
         return DualScalar<F>(a.x + b.x, a.y + b.y);
     }
 
@@ -178,7 +224,7 @@ namespace dual {
 // binary -
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline DualScalar<F> operator-(const DualScalar<F> &a,
-                                                               const DualScalar<F> &b) {
+                                   const DualScalar<F> &b) {
         return DualScalar<F>(a.x - b.x, a.y - b.y);
     }
 
@@ -213,7 +259,7 @@ namespace dual {
 // binary /
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline DualScalar<F> operator/(const DualScalar<F> &a,
-                                                               const DualScalar<F> &b) {
+                                   const DualScalar<F> &b) {
         const F bxinv = F(1.0) / b.x, axbybx = a.x * bxinv;
         return DualScalar<F>(axbybx, (a.y - axbybx * b.y) * bxinv);
     }
@@ -487,7 +533,7 @@ namespace dual {
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline DualScalar<F> bessel_j1(const DualScalar<F> &a) {
         return DualScalar<F>(std::cyl_bessel_j(1, a.x),
-                          F(0.5) * (std::cyl_bessel_j(0, a.x) - std::cyl_bessel_j(2, a.x)) * a.y);
+                             F(0.5) * (std::cyl_bessel_j(0, a.x) - std::cyl_bessel_j(2, a.x)) * a.y);
     }
 
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -505,7 +551,7 @@ namespace dual {
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
     inline DualScalar<F> bessel_i1(const DualScalar<F> &a) {
         return DualScalar<F>(std::cyl_bessel_i(1, a.x),
-                          F(0.5) * (std::cyl_bessel_i(0, a.x) + std::cyl_bessel_i(2, a.x)) * a.y);
+                             F(0.5) * (std::cyl_bessel_i(0, a.x) + std::cyl_bessel_i(2, a.x)) * a.y);
     }
 
     template <typename F, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
