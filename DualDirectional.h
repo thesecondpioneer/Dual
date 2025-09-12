@@ -333,8 +333,8 @@ namespace dual {
     template<typename F, typename Scalar, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true,
             typename std::enable_if<std::is_arithmetic_v<Scalar>, bool>::type = true>
     inline DualDirectional<F, N> operator/(const Scalar &a, const DualDirectional<F, N> &b) {
-        const F abybx = a / b.x, abybx2 = abybx / b.x;
-        return DualDirectional < F, N > (abybx, b.y * -abybx2, b.u * -abybx2, b.v * -abybx2);
+        const F bxinv = F(1.0) / b.x, abybx = a * bxinv, abybx2 = abybx * bxinv;
+        return DualDirectional < F, N > (abybx, b.y * -abybx2, b.u * -abybx2, b.v * -abybx2 + F(2.0) * abybx2 * b.y * bxinv * b.u);
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -357,7 +357,7 @@ namespace dual {
     inline DualDirectional<F, N> log(const DualDirectional<F, N> &a) {
         F inv = F(1.0) / a.x;
         Eigen::Vector<F, N> u_by_grad = inv * a.u;
-        return DualDirectional < F, N > (log1p(a.x), a.y * inv, u_by_grad, inv * (a.v - a.y * u_by_grad));
+        return DualDirectional < F, N > (log(a.x), a.y * inv, u_by_grad, inv * (a.v - a.y * u_by_grad));
     }
 
     template<typename F, int N, typename std::enable_if<std::is_arithmetic_v<F>, bool>::type = true>
@@ -414,14 +414,16 @@ namespace dual {
             }
             return result;
         }
-        const F log_ax = log(a.x), a_to_b_by_log_ax = a_to_b * log_ax, a_to_bm1_by_bxlogbxp1 =
+        const F log_ax = log(a.x), a_to_b_by_log_ax = a_to_b * log_ax, a_to_bm1_by_bxlogaxp1 =
                 a_to_bm1 * (b.x * log_ax + F(1.0));
         return DualDirectional < F, N > (a_to_b, bx_by_a_to_bm1 * a.y + a_to_b_by_log_ax * b.y,
                 bx_by_a_to_bm1 * a.u + a_to_b_by_log_ax * b.u,
-                bx_by_a_to_bm1 * a.v +
+                bx_by_a_to_bm1 * a.v + a_to_b_by_log_ax * b.v
+                +
                 a.y *
-                ((b.x - F(1.0)) * bx_by_a_to_bm1 * axinv * a.u + a_to_bm1_by_bxlogbxp1 * b.u) +
-                b.y * (a_to_bm1_by_bxlogbxp1 * a.u + a_to_b_by_log_ax * log_ax * b.u));
+                ((b.x - F(1.0)) * bx_by_a_to_bm1 * axinv * a.u + a_to_bm1_by_bxlogaxp1 * b.u) +
+                b.y * (a_to_bm1_by_bxlogaxp1 * a.u + a_to_b_by_log_ax * log_ax * b.u)
+                );
     }
 
 // power function with scalar exponent

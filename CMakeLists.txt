@@ -23,6 +23,9 @@ add_executable(gradient_tests
 add_executable(hessian_tests
         tests_hess/test_mgh09.cpp
         tests_hess/main.cpp
+        tests_hess/test_mgh10.cpp
+        tests_hess/test_rat42.cpp
+        tests_hess/test_rat43.cpp
 )
 
 target_include_directories(Dual INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
