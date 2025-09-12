@@ -64,7 +64,7 @@ protected:
 
     template<typename DualType>
     auto rat43(double x, double y, const std::vector<DualType>& b) {
-        return y - b[0] / pow(1.0 + exp(b[1] - b[2] * x), 1.0 / b[3]); //TODO: error in pow function for directional hessian
+        return y - b[0] / pow(1.0 + exp(b[1] - b[2] * x), 1.0 / b[3]);
     }
 };
 
