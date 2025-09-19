@@ -88,7 +88,9 @@ TEST_F(Rat42HessianTest, Performance) {
     timer.stop();
     double nested_time = timer.total_time();
     timer = stopwatch<std::chrono::nanoseconds>();
-    std::cout << control_sum << std::endl;
+    //std::cout << control_sum << std::endl;
+
+    control_sum = 0;
 
     // 2. Benchmark generalized version
     timer.start();
@@ -97,8 +99,8 @@ TEST_F(Rat42HessianTest, Performance) {
     }
     timer.stop();
     double generalized_time = timer.total_time();
-    std::cout << control_sum << std::endl;
-    std::cout << "\nPerformance Results (avg ns/op):\n"
+    //std::cout << control_sum << std::endl;
+    GTEST_LOG_(INFO) << "\nPerformance Results for Rat42 (avg ns/op):\n"
               << "Nested:      " << nested_time/runs << "\n"
               << "Generalized: " << generalized_time/runs << "\n"
               << "Speedup:     " << nested_time/generalized_time << "x\n";
